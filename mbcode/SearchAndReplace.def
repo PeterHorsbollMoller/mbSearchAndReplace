@@ -1,0 +1,4 @@
+Declare Sub DLGSearchAndReplace
+
+Declare Sub SRCREPSetTableName(ByVal sTable As String)
+Declare Sub SRCREPSetColumnName(ByVal sColumn As String)

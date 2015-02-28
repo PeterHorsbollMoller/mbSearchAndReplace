@@ -1,0 +1,14 @@
+[LINK]
+Application=..\SearchAndReplace.mbx
+Module=Library\ARRAYLib.mbo
+Module=Library\COLUMNLib.mbo
+Module=Library\CONFIGFILELib.mbo
+Module=Library\DEBUGLib.mbo
+Module=Library\FILELib.mbo
+Module=Library\ERRORLib.mbo
+Module=Library\ProgramInfo.mbo
+Module=Library\RESSTRNGLib.mbo
+Module=Library\STRINGLib.mbo
+Module=Library\TABLELib.mbo
+Module=MENUSearchAndReplace.mbo
+Module=SearchAndReplace.mbo

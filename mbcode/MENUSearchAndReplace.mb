@@ -1,0 +1,150 @@
+'*******************************************************************************
+'**   Created by Peter Horsbøll Møller, Pitney Bowes Business Insight
+'** 	Program:
+'** 	Modul:
+'**
+'*******************************************************************************
+
+'-------------------------------------
+Include "MapBasic.def"
+Include "Icons.def"
+Include "Menu.def"
+'**default constants...
+Include "Library\Defaults.def"
+
+Define xProgram 		"SearchAndReplace"
+Define xProgramMenu		"Search And Replace"
+Define xVersion 		"1.0"
+Define xYear			"2015"
+Define xAddToMenuBar	FALSE
+
+Define FILE_INI			GetFolderPath$(FOLDER_MI_PREFERENCE) & xProgram & ".ini"
+Define FILE_DBG			ApplicationDirectory$() & xProgram & ".dbg"
+'Define FILE_DLL			ApplicationDirectory$() & xProgram & ".dll"
+Define FILE_PAD			GetFolderPath$(FOLDER_MI_PREFERENCE) & xProgram & ".btp"
+
+'-------------------------------------
+Include "Library\DEBUGLib.def"
+Include "Library\ERRORLib.def"
+Include "Library\ProgramInfo.def"
+Include "Library\TABLELib.def"
+
+Include "SearchAndReplace.def"
+
+'-----------------------------------------------------------------------------------------
+Declare Sub Main
+Declare Sub EndProgram
+
+Declare Sub MENUSearchAndReplace
+Declare Sub MENUSearchAndReplaceTL
+
+'**********************************************************************************************''
+'**   Created by Peter Horsbøll Møller, Pitney Bowes Business Insight
+'
+'**********************************************************************************************''
+Sub Main
+
+OnError GoTo ErrorOccured
+
+	'***Initializing ApplicationInfo
+	Call PRGISetApplicationName(xProgram)
+	Call PRGISetApplicationVersion(xVersion)
+	Call PRGISetApplicationCopyrightYear(xYear)
+	Call PRGISetApplicationDevelopedBy("Peter Horsbøll Møller")
+
+	'***Enabling Debug if file exists
+	Call DEBUGEnableByFile(FILE_DBG)
+
+	Create Menu xProgramMenu As
+		"Search And Replace"
+			HelpMsg ""
+			Calling MENUSearchAndReplace,
+		"(-",
+		"End program"
+			Calling EndProgram,
+		"About..."
+			Calling PRGIAboutbox
+
+	Alter Menu ID M_SHORTCUT_TLV_TABLES Add
+		"Search And Replace"
+			HelpMsg ""
+			Calling MENUSearchAndReplaceTL
+
+	If xAddToMenuBar Then
+		'Remove the Window menu and Help menu
+		Alter Menu Bar Remove ID 6, ID 7
+		'Add the custom menu, then the Window & Help menus
+		Alter Menu Bar Add xProgramMenu, ID 6, ID 7
+	Else
+		Alter Menu ID 4
+			Add "(-", xProgramMenu  As xProgramMenu
+	End If
+
+	Exit Sub
+'-------------------------
+ErrorOccured:
+	Call ERRCreate(Err(), Error$(), "Main")
+	Call ERRShow()
+
+End Sub
+
+'****************************************
+'**   Created by Peter Horsbøll Møller, Pitney Bowes Business Insight
+'**   Ending MapBasic application
+'****************************************
+Sub EndProgram
+
+OnError GoTo ErrorOccured
+
+	End Program
+	Exit Sub
+'-------------------------
+ErrorOccured:
+	Call ERRCreate(Err(), Error$(), "EndProgram")
+	Call ERRShow()
+
+End Sub
+
+'**********************************************************************************************''
+'Created by Peter Horsbøll Møller, Pitney Bowes Business Insight
+'Parameters:
+'
+'**********************************************************************************************''
+Sub MENUSearchAndReplace
+
+OnError GoTo ErrorOccured
+
+	Call DLGSearchAndReplace
+	Exit Sub
+'-------------------------
+ErrorOccured:
+	Call ERRCreate(Err(), Error$(), "MENUSearchAndReplace")
+	Call ERRShow()
+
+End Sub
+
+'**********************************************************************************************''
+'Created by Peter Horsbøll Møller, Pitney Bowes Business Insight
+'Parameters:
+'
+'**********************************************************************************************''
+Sub MENUSearchAndReplaceTL
+
+Dim	sTab As String
+
+OnError GoTo ErrorOccured
+
+	If TableListInfo(TL_INFO_SEL_COUNT) > 0 Then
+		sTab	= TableListSelectionInfo (1, TL_SEL_INFO_NAME)
+		Call SRCREPSetTableName(sTab)
+	End If
+
+	Call DLGSearchAndReplace
+	Exit Sub
+'-------------------------
+ErrorOccured:
+	Call ERRCreate(Err(), Error$(), "MENUSearchAndReplaceTL")
+	Call ERRShow()
+
+End Sub
+
