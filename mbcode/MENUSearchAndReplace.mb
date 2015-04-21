@@ -14,7 +14,7 @@ Include "Library\Defaults.def"
 
 Define xProgram 		"SearchAndReplace"
 Define xProgramMenu		"Search And Replace"
-Define xVersion 		"1.0"
+Define xVersion 		"1.1.0"
 Define xYear			"2015"
 Define xAddToMenuBar	FALSE
 

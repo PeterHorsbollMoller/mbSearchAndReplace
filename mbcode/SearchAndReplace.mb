@@ -25,6 +25,7 @@ Include "SearchAndReplace.def"
 Declare Sub SRCREPHandler_OnLoad
 Declare Sub SRCREPHandler_TablePicked
 Declare Sub SRCREPHandler_OKClicked
+Declare Sub SRCREPHandler_ColumnTypesClicked
 
 Declare Sub SearchAndReplaceInTable( ByVal sTab As String
 							, ByVal sColumn As String
@@ -33,12 +34,13 @@ Declare Sub SearchAndReplaceInTable( ByVal sTab As String
 							, ByVal nStartPosition As Integer
 							)
 
-Define CTRL_LST_TABLES			100
-Define CTRL_LST_COLUMNS			200
-Define CTRL_TXT_SEARCH_FOR		300
-Define CTRL_TXT_REPLACE_WITH		400
-Define CTRL_TXT_START_POSITION	500
-Define CTRL_BTN_OK				1000
+Define CTRL_LST_TABLES				100
+Define CTRL_LST_COLUMNS				200
+Define CTRL_CHK_ALLOW_NUMERICAL_COLS	210
+Define CTRL_TXT_SEARCH_FOR			300
+Define CTRL_TXT_REPLACE_WITH			400
+Define CTRL_TXT_START_POSITION		500
+Define CTRL_BTN_OK					1000
 
 Dim	marrTables(), marrColumns() As String,
 	msTableName, msColumnName As String
@@ -66,19 +68,24 @@ Sub DLGSearchAndReplace
 		Control PopupMenu		Position 5,15		Width 165		ID CTRL_LST_TABLES
 			Title From Variable marrTables()
 			Calling SRCREPHandler_TablePicked
-		Control StaticText		Position 5,30
+		Control StaticText		Position 5,30		Width 165
 			Title "Column"
 		Control PopupMenu		Position 5,40		Width 165		ID CTRL_LST_COLUMNS
 
-		Control StaticText		Position 5,55
+		Control CheckBox		Position 5,55		Width 165		ID CTRL_CHK_ALLOW_NUMERICAL_COLS
+			Title "Also use numerical columns"
+			Value FALSE
+			Calling SRCREPHandler_ColumnTypesClicked
+
+		Control StaticText		Position 5,70		Width 80
 			Title "Search for"
-		Control EditText		Position 5,65		Width 80		ID CTRL_TXT_SEARCH_FOR
-		Control StaticText		Position 90,55
+		Control EditText		Position 5,80		Width 80		ID CTRL_TXT_SEARCH_FOR
+		Control StaticText		Position 90,70		Width 80
 			Title "Replace with"
-		Control EditText		Position 90,65		Width 80		ID CTRL_TXT_REPLACE_WITH
-		Control StaticText		Position 5,80
+		Control EditText		Position 90,80		Width 80		ID CTRL_TXT_REPLACE_WITH
+		Control StaticText		Position 5,95		Width 80
 			Title "Start Position"
-		Control EditText		Position 5,90		Width 80		ID CTRL_TXT_START_POSITION
+		Control EditText		Position 5,105		Width 80		ID CTRL_TXT_START_POSITION
 			Value "1"
 
 		Control OKButton									ID CTRL_BTN_OK
@@ -143,7 +150,11 @@ OnError GoTo ErrorOccured
 	End If
 
 	Redim marrColumns(0)
-	nNumCols	= COLGetListOfNames(marrTables(nItem), CRITERIA_USE_CHAR, marrColumns)
+	If ReadControlValue(CTRL_CHK_ALLOW_NUMERICAL_COLS) Then
+		nNumCols	= COLGetListOfNames(marrTables(nItem), CRITERIA_USE_CHAR + CRITERIA_USE_NUMERICAL, marrColumns)
+	Else
+		nNumCols	= COLGetListOfNames(marrTables(nItem), CRITERIA_USE_CHAR, marrColumns)
+	End If
 	If nNumCols = 0 Then
 		Note "Please pick a table with editable character columns!"
 		Alter Control CTRL_BTN_OK Disable
@@ -225,6 +236,24 @@ ErrorOccured:
 End Sub
 
 '**********************************************************************************************''
+'Created by Peter Horsbøll Møller, Pitney Bowes Business Insight
+'Parameters:
+'
+'**********************************************************************************************''
+Sub SRCREPHandler_ColumnTypesClicked
+
+OnError GoTo ErrorOccured
+
+	Call SRCREPHandler_TablePicked
+	Exit Sub
+'-------------------------
+ErrorOccured:
+	Call ERRCreate(Err(), Error$(), "SRCREPHandler_ColumnTypesClicked")
+	Call ERRShow()
+
+End Sub
+
+'**********************************************************************************************''
 'Created by Peter Horsbøll Møller, Pitney Bowes Software
 'Parameters:
 '	:
@@ -243,8 +272,20 @@ Dim	aCol As Alias
 OnError GoTo ErrorOccured
 
 	aCol	= sTab & "." & sColumn
-	Update sTab
-		Set sColumn = STRINGReplacePosition(aCol, sSearchFor, sReplaceWith, nStartPosition)
+	Do Case ColumnInfo(sTab, sColumn, COL_INFO_TYPE)
+		Case COL_TYPE_CHAR
+			Update sTab
+				Set sColumn = STRINGReplacePosition(aCol, sSearchFor, sReplaceWith, nStartPosition)
+
+		Case COL_TYPE_INTEGER, COL_TYPE_SMALLINT
+			Update sTab
+				Set sColumn = DeformatNumber$(STRINGReplacePosition(FormatNumber$(aCol), sSearchFor, sReplaceWith, nStartPosition))
+
+		Case COL_TYPE_FLOAT, COL_TYPE_DECIMAL
+			Update sTab
+				Set sColumn = DeformatNumber$(STRINGReplacePosition(FormatNumber$(aCol), sSearchFor, sReplaceWith, nStartPosition))
+
+	End Case
 
 	Exit Function
 '-------------------------
